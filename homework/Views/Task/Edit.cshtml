@@ -1,0 +1,11 @@
+@model TaskItem
+@{ var action = Model.Id == 0 ? "Create" : "Edit"; ViewData["Title"] = Model.Id == 0 ? "Добавить запись" : "Изменить запись"; }
+<h1>@ViewData["Title"]</h1>
+<form asp-action="@action" asp-route-id="@Model.Id" method="post">
+<div asp-validation-summary="All" class="error" role="alert"></div>
+<input asp-for="Id" type="hidden" />
+<div class="field"><label asp-for="Title"></label><input asp-for="Title" /><span asp-validation-for="Title"></span></div>
+<div class="field"><label asp-for="Description"></label><textarea asp-for="Description"></textarea><span asp-validation-for="Description"></span></div>
+<div class="field"><label asp-for="IsCompleted"></label><input asp-for="IsCompleted" /><span asp-validation-for="IsCompleted"></span></div>
+<button type="submit">Сохранить</button> <a asp-action="Index">Отмена</a>
+</form>

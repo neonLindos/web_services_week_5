@@ -1,0 +1,12 @@
+@model Product
+@{ var action = Model.Id == 0 ? "Create" : "Edit"; ViewData["Title"] = Model.Id == 0 ? "Добавить запись" : "Изменить запись"; }
+<h1>@ViewData["Title"]</h1>
+<form asp-action="@action" asp-route-id="@Model.Id" method="post">
+<div asp-validation-summary="All" class="error" role="alert"></div>
+<input asp-for="Id" type="hidden" />
+<div class="field"><label asp-for="Name"></label><input asp-for="Name" /><span asp-validation-for="Name"></span></div>
+<div class="field"><label asp-for="Description"></label><textarea asp-for="Description"></textarea><span asp-validation-for="Description"></span></div>
+<div class="field"><label asp-for="Price"></label><input asp-for="Price" step="0.01" type="number" /><span asp-validation-for="Price"></span></div>
+<div class="field"><label asp-for="Quantity"></label><input asp-for="Quantity" /><span asp-validation-for="Quantity"></span></div>
+<button type="submit">Сохранить</button> <a asp-action="Index">Отмена</a>
+</form>

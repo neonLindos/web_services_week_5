@@ -1,0 +1,7 @@
+@model Product
+@{ ViewData["Title"] = "Подтверждение удаления"; }
+<h1>Удалить запись №@Model.Id?</h1>
+<p>@Model.Name</p>
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+<button type="submit">Да, удалить</button> <a asp-action="Index">Отмена</a>
+</form>

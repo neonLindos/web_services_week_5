@@ -1,0 +1,30 @@
+# Результаты сборки и IDE
+bin/
+obj/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Локальные базы и журналы SQLite
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# Секреты и локальные настройки
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+
+# Временные файлы и выгрузки кода
+~$*
+*.tmp
+*.log
+repomix-output.*
+.DS_Store
+Thumbs.db

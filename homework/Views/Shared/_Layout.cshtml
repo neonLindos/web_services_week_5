@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>@ViewData["Title"] — TaskManagerClient</title><link rel="stylesheet" href="~/site.css" /></head>
+<body><header><a asp-controller="Task" asp-action="Index">Задачи</a> · Модуль 05</header>
+<main>
+@if (TempData["Success"] is string success) { <p class="success" role="status">@success</p> }
+@if (ViewBag.Error is string error) { <p class="error" role="alert">@error</p> }
+@RenderBody()
+</main></body></html>
