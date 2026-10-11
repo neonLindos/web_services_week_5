@@ -15,4 +15,5 @@ if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Student/Error");
 app.UseStaticFiles();
 app.UseRouting();
 app.MapControllerRoute("default", "{controller=Student}/{action=Index}/{id?}");
+StudentClient.Api.DemoApi.StartIfNeeded(app);
 app.Run();

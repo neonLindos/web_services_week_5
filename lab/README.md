@@ -2,19 +2,20 @@
 
 **Тема:** использование Web API из ASP.NET Core через HttpClient.
 **Проект:** ProductClient (Product).
-**Используемые технологии:** .NET 8, ASP.NET Core MVC, Razor, IHttpClientFactory.
+**Используемые технологии:** .NET 10, ASP.NET Core MVC, Razor, IHttpClientFactory.
 
 ## Как запустить
 
-1. Из корня репозитория запустите учебный API в отдельном терминале:
-   ```powershell
-   dotnet run --project api/DemoApi.csproj
-   ```
-2. Запустите клиент:
-   ```powershell
-   dotnet run --project lab/ProductClient.csproj
-   ```
-3. Откройте http://localhost:5102. В Visual Studio можно открыть `.csproj` и выбрать профиль `ProductClient`.
+В этой папке выполните:
+
+```powershell
+dotnet run
+```
+
+Вместе с клиентом поднимается встроенный учебный API (`Api/DemoApi.cs`) на порту 5100,
+если там ещё ничего не работает; он останавливается при выходе (`Ctrl+C`). Откройте http://localhost:5102.
+Если API уже запущен отдельно, клиент использует его. Нужен SDK .NET 10.
+Запускайте один клиент за раз: порт 5100 занимает API первого запущенного клиента.
 
 API: `http://localhost:5100/api/products`. Адрес задаётся в `appsettings.json`
 через `Api:BaseAddress` или переменную `Api__BaseAddress`. Нужен JSON-массив для
@@ -43,7 +44,7 @@ HTTP используется для локальной демонстрации
 и тайм-аутом 10 секунд. Сервис получает его через
 `IHttpClientFactory.CreateClient("ProductApi")` в конструкторе. Фабрика управляет
 пулом обработчиков соединений; `new HttpClient()` перед запросами не используется.
-Общая реализация запросов находится в `../shared/` и подключена в `.csproj`.
+Общая реализация запросов лежит в самой работе: `Services/ApiService.cs` и `Services/ApiResult.cs`.
 
 ## Обработка ответов
 

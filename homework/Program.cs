@@ -15,4 +15,5 @@ if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Task/Error");
 app.UseStaticFiles();
 app.UseRouting();
 app.MapControllerRoute("default", "{controller=Task}/{action=Index}/{id?}");
+TaskManagerClient.Api.DemoApi.StartIfNeeded(app);
 app.Run();

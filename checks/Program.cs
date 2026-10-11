@@ -1,10 +1,14 @@
+using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http.Json;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
-using DemoApi;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.TestHost;
 
 var assertions = 0;
+var Web = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 void Check(bool condition, string message)
 {
     assertions++;
@@ -57,21 +61,7 @@ void Check(bool condition, string message)
         Check(!(await service.DeleteAsync(7)).Success, "Сбой сети DELETE");
     }
     Check(factory.Calls == 1, "Клиент получается из фабрики в конструкторе");
-    var store = new DemoStore();
-    var api = new DemoApi.Controllers.TasksController(store);
-    var apiItem = System.Text.Json.JsonSerializer.Deserialize<DemoApi.Models.TaskItem>(System.Text.Json.JsonSerializer.Serialize(item))!;
-    var created = (CreatedAtActionResult)api.Create(apiItem).Result!;
-    Check(created.StatusCode == 201 && created.ActionName == "GetById", "API POST и Location");
-    var id = apiItem.Id;
-    Check(((OkObjectResult)api.GetById(id).Result!).Value == apiItem, "API GET созданной записи");
-    var updated = new DemoApi.Models.TaskItem { Id = id, Title = "Проверка", Description = "Текст", IsCompleted = false };
-    Check(api.Update(id + 1, updated) is BadRequestObjectResult, "API несовпадение ID");
-    apiItem.IsCompleted = true;
-    Check(api.Update(id, apiItem) is NoContentResult, "API PUT");
-    Check(((OkObjectResult)api.GetById(id).Result!).Value == apiItem, "API сохранение изменения");
-    Check(api.Delete(id) is NoContentResult, "API DELETE");
-    Check(api.GetById(id).Result is NotFoundResult && api.Delete(id) is NotFoundResult, "API 404 после удаления");
-    Check(api.Update(id, apiItem) is NotFoundResult, "API PUT отсутствующего ID");
+    await CheckEmbeddedApiAsync("tasks", n => TaskManagerClient.Api.DemoApi.Create(new Uri("http://localhost:5100"), n), JsonNode.Parse(JsonSerializer.Serialize(item, Web))!.AsObject(), "title");
     var invalid = new TaskManagerClient.Models.TaskItem();
     Check(!Validator.TryValidateObject(invalid, new ValidationContext(invalid), new List<ValidationResult>(), true), "Пустые поля отклоняются");
 }
@@ -122,21 +112,7 @@ void Check(bool condition, string message)
         Check(!(await service.DeleteAsync(7)).Success, "Сбой сети DELETE");
     }
     Check(factory.Calls == 1, "Клиент получается из фабрики в конструкторе");
-    var store = new DemoStore();
-    var api = new DemoApi.Controllers.ProductsController(store);
-    var apiItem = System.Text.Json.JsonSerializer.Deserialize<DemoApi.Models.Product>(System.Text.Json.JsonSerializer.Serialize(item))!;
-    var created = (CreatedAtActionResult)api.Create(apiItem).Result!;
-    Check(created.StatusCode == 201 && created.ActionName == "GetById", "API POST и Location");
-    var id = apiItem.Id;
-    Check(((OkObjectResult)api.GetById(id).Result!).Value == apiItem, "API GET созданной записи");
-    var updated = new DemoApi.Models.Product { Id = id, Name = "Проверка", Description = "Текст", Price = 12.50m, Quantity = 3 };
-    Check(api.Update(id + 1, updated) is BadRequestObjectResult, "API несовпадение ID");
-    apiItem.Price = 25m;
-    Check(api.Update(id, apiItem) is NoContentResult, "API PUT");
-    Check(((OkObjectResult)api.GetById(id).Result!).Value == apiItem, "API сохранение изменения");
-    Check(api.Delete(id) is NoContentResult, "API DELETE");
-    Check(api.GetById(id).Result is NotFoundResult && api.Delete(id) is NotFoundResult, "API 404 после удаления");
-    Check(api.Update(id, apiItem) is NotFoundResult, "API PUT отсутствующего ID");
+    await CheckEmbeddedApiAsync("products", n => ProductClient.Api.DemoApi.Create(new Uri("http://localhost:5100"), n), JsonNode.Parse(JsonSerializer.Serialize(item, Web))!.AsObject(), "name");
     var invalid = new ProductClient.Models.Product();
     Check(!Validator.TryValidateObject(invalid, new ValidationContext(invalid), new List<ValidationResult>(), true), "Пустые поля отклоняются");
 }
@@ -187,23 +163,54 @@ void Check(bool condition, string message)
         Check(!(await service.DeleteAsync(7)).Success, "Сбой сети DELETE");
     }
     Check(factory.Calls == 1, "Клиент получается из фабрики в конструкторе");
-    var store = new DemoStore();
-    var api = new DemoApi.Controllers.StudentsController(store);
-    var apiItem = System.Text.Json.JsonSerializer.Deserialize<DemoApi.Models.Student>(System.Text.Json.JsonSerializer.Serialize(item))!;
-    var created = (CreatedAtActionResult)api.Create(apiItem).Result!;
-    Check(created.StatusCode == 201 && created.ActionName == "GetById", "API POST и Location");
-    var id = apiItem.Id;
-    Check(((OkObjectResult)api.GetById(id).Result!).Value == apiItem, "API GET созданной записи");
-    var updated = new DemoApi.Models.Student { Id = id, FullName = "Проверка", Group = "SE-301", Course = 3, Email = "test@example.com" };
-    Check(api.Update(id + 1, updated) is BadRequestObjectResult, "API несовпадение ID");
-    apiItem.Course = 4;
-    Check(api.Update(id, apiItem) is NoContentResult, "API PUT");
-    Check(((OkObjectResult)api.GetById(id).Result!).Value == apiItem, "API сохранение изменения");
-    Check(api.Delete(id) is NoContentResult, "API DELETE");
-    Check(api.GetById(id).Result is NotFoundResult && api.Delete(id) is NotFoundResult, "API 404 после удаления");
-    Check(api.Update(id, apiItem) is NotFoundResult, "API PUT отсутствующего ID");
+    await CheckEmbeddedApiAsync("students", n => StudentClient.Api.DemoApi.Create(new Uri("http://localhost:5100"), n), JsonNode.Parse(JsonSerializer.Serialize(item, Web))!.AsObject(), "fullName");
     var invalid = new StudentClient.Models.Student();
     Check(!Validator.TryValidateObject(invalid, new ValidationContext(invalid), new List<ValidationResult>(), true), "Пустые поля отклоняются");
+}
+
+// Встроенный API работы: настоящие маршруты и проверки на тестовом сервере в памяти, без порта.
+async Task CheckEmbeddedApiAsync(string route, Func<Action<WebApplicationBuilder>?, WebApplication> create, JsonObject valid, string field)
+{
+    // Адрес клиента из ASPNETCORE_URLS не должен занять сервер API
+    Environment.SetEnvironmentVariable("ASPNETCORE_URLS", "http://localhost:5101");
+    await using (var real = create(null))
+        Check(real.Urls.SequenceEqual(new[] { "http://localhost:5100" }), $"{route}: API слушает только адрес из Api:BaseAddress");
+    Environment.SetEnvironmentVariable("ASPNETCORE_URLS", null);
+
+    await using var app = create(b => { b.WebHost.UseTestServer(); b.Logging.ClearProviders(); });
+    await app.StartAsync();
+    using var http = app.GetTestClient();
+    var path = $"/api/{route}";
+
+    var list = await http.GetFromJsonAsync<JsonArray>(path);
+    Check(list!.Count == 3, $"{route}: три начальные записи");
+    var first = list[0]!["id"]!.GetValue<int>();
+    Check((await http.GetAsync($"{path}/{first}")).StatusCode == HttpStatusCode.OK, $"{route}: GET по ID");
+    Check((await http.GetAsync($"{path}/999999")).StatusCode == HttpStatusCode.NotFound, $"{route}: GET 404");
+
+    var created = await http.PostAsJsonAsync(path, valid);
+    Check(created.StatusCode == HttpStatusCode.Created, $"{route}: POST 201");
+    var item = (await created.Content.ReadFromJsonAsync<JsonObject>())!;
+    var id = item["id"]!.GetValue<int>();
+    Check(id == 4, $"{route}: Id назначает API, а не клиент");
+    Check(created.Headers.Location!.OriginalString == $"{path}/{id}", $"{route}: заголовок Location");
+
+    Check((await http.PostAsJsonAsync(path, new JsonObject())).StatusCode == HttpStatusCode.BadRequest, $"{route}: POST пустых данных 400");
+    Check((await http.PostAsync(path, new StringContent("не json", System.Text.Encoding.UTF8, "application/json"))).StatusCode == HttpStatusCode.BadRequest, $"{route}: POST неверного JSON 400");
+
+    item[field] = "Изменено";
+    Check((await http.PutAsJsonAsync($"{path}/{id + 1}", item)).StatusCode == HttpStatusCode.BadRequest, $"{route}: PUT несовпадение ID 400");
+    Check((await http.PutAsJsonAsync($"{path}/{id}", item)).StatusCode == HttpStatusCode.NoContent, $"{route}: PUT 204");
+    Check((await http.GetFromJsonAsync<JsonObject>($"{path}/{id}"))![field]!.GetValue<string>() == "Изменено", $"{route}: PUT сохранил изменение");
+    var missing = item.DeepClone().AsObject(); missing["id"] = 999999;
+    Check((await http.PutAsJsonAsync($"{path}/999999", missing)).StatusCode == HttpStatusCode.NotFound, $"{route}: PUT отсутствующего ID 404");
+    var invalid = item.DeepClone().AsObject(); invalid[field] = "";
+    Check((await http.PutAsJsonAsync($"{path}/{id}", invalid)).StatusCode == HttpStatusCode.BadRequest, $"{route}: PUT пустого поля 400");
+
+    Check((await http.DeleteAsync($"{path}/{id}")).StatusCode == HttpStatusCode.NoContent, $"{route}: DELETE 204");
+    Check((await http.GetAsync($"{path}/{id}")).StatusCode == HttpStatusCode.NotFound, $"{route}: запись исчезла");
+    Check((await http.DeleteAsync($"{path}/{id}")).StatusCode == HttpStatusCode.NotFound, $"{route}: DELETE повторно 404");
+    await app.StopAsync();
 }
 
 Console.WriteLine($"Проверки пройдены: {assertions}. Веб-серверы не запускались.");

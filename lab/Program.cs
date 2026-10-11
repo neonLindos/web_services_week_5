@@ -15,4 +15,5 @@ if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Product/Error");
 app.UseStaticFiles();
 app.UseRouting();
 app.MapControllerRoute("default", "{controller=Product}/{action=Index}/{id?}");
+ProductClient.Api.DemoApi.StartIfNeeded(app);
 app.Run();
